@@ -5,7 +5,9 @@ Descarga los lotes de datos del proyecto.
   Los lotes se separan por releasedate, la fecha en que la NASA publico cada medicion.
 - Catalogo de habitabilidad: Habitable Worlds Catalog (PHL, Universidad de Puerto Rico).
 
-Uso:
+El notebook 00_descargar_lote importa este mismo archivo, asi la consulta a la NASA vive en un solo lugar.
+
+Uso local:
     python scripts/descargar_datos.py 1      -> mediciones publicadas antes de 2020 + catalogo HWC
     python scripts/descargar_datos.py 2      -> mediciones de 2020 a septiembre 2026
     python scripts/descargar_datos.py 3      -> mediciones desde el 1 de octubre 2026 (demo en vivo)
@@ -38,21 +40,35 @@ LOTES = {
 CARPETA_DATOS = Path(__file__).resolve().parent.parent / "datos"
 
 
-def descargar(url: str, destino: Path) -> None:
-    destino.parent.mkdir(parents=True, exist_ok=True)
+def bajar(url: str) -> bytes:
+    """Baja un CSV y falla si el sitio responde con una pagina HTML (por ejemplo un bloqueo de Cloudflare)."""
     peticion = urllib.request.Request(url, headers={"User-Agent": "proyecto-final-ledezma"})
     with urllib.request.urlopen(peticion, timeout=300) as respuesta:
         contenido = respuesta.read()
     if contenido.lstrip().startswith(b"<"):
         raise RuntimeError(f"La respuesta no es CSV (posible bloqueo del sitio): {url}")
-    destino.write_bytes(contenido)
-    filas = contenido.count(b"\n") - 1
-    print(f"OK {destino.relative_to(CARPETA_DATOS.parent)}  ({filas:,} filas, {len(contenido) / 1e6:.1f} MB)")
+    return contenido
+
+
+def contar_filas(contenido: bytes) -> int:
+    return max(contenido.count(b"\n") - 1, 0)
+
+
+def url_consulta(filtro: str) -> str:
+    consulta = f"select {','.join(COLUMNAS)} from ps where {filtro}"
+    return NASA_TAP + "?" + urllib.parse.urlencode({"query": consulta, "format": "csv"})
 
 
 def url_lote(lote: int) -> str:
-    consulta = f"select {','.join(COLUMNAS)} from ps where {LOTES[lote]}"
-    return NASA_TAP + "?" + urllib.parse.urlencode({"query": consulta, "format": "csv"})
+    return url_consulta(LOTES[lote])
+
+
+def descargar(url: str, destino: Path) -> None:
+    contenido = bajar(url)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_bytes(contenido)
+    print(f"OK {destino.relative_to(CARPETA_DATOS.parent)}  "
+          f"({contar_filas(contenido):,} filas, {len(contenido) / 1e6:.1f} MB)")
 
 
 def main() -> None:
