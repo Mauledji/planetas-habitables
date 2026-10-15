@@ -1,0 +1,52 @@
+resources:
+  jobs:
+    pipeline:
+      name: pf_ledezma pipeline [${bundle.target}]
+      description: Bronze → silver → gold de los planetas habitables. Arranca solo cuando llega un lote nuevo de la NASA al volume.
+      tags:
+        proyecto: planetas-habitables
+
+      # Arranca cuando aparece un archivo nuevo en landing/mediciones (lo escribe 00_descargar_lote)
+      trigger:
+        pause_status: ${var.pausa_trigger}
+        file_arrival:
+          url: /Volumes/${var.catalogo}/bronze/landing/mediciones/
+          min_time_between_triggers_seconds: 60
+          wait_after_last_change_seconds: 60
+
+      parameters:
+        - name: catalogo
+          default: ${var.catalogo}
+
+      max_concurrent_runs: 1
+      queue:
+        enabled: true
+
+      email_notifications:
+        on_failure:
+          - ${workspace.current_user.userName}
+
+      tasks:
+        - task_key: bronze
+          description: Carga con Auto Loader solo los archivos nuevos del volume
+          notebook_task:
+            notebook_path: ../notebooks/01_bronze.py
+          max_retries: 2
+          min_retry_interval_millis: 60000
+          retry_on_timeout: true
+
+        - task_key: silver
+          description: Tipos, copias exactas, un registro por planeta, nulos y join con el catálogo de expertos
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: ../notebooks/02_silver.sql
+          max_retries: 1
+          min_retry_interval_millis: 30000
+
+        - task_key: gold
+          description: Ranking de habitabilidad con reglas de calidad y catálogo público
+          depends_on:
+            - task_key: silver
+          notebook_task:
+            notebook_path: ../notebooks/03_gold.sql

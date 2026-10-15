@@ -1,0 +1,72 @@
+# Bundle del proyecto: despliega el job del pipeline en dev o en prod, y la app en prod.
+#   databricks bundle validate -t dev
+#   databricks bundle deploy -t prod
+#   databricks bundle run app -t prod
+bundle:
+  name: planetas-habitables
+
+include:
+  - resources/*.yml
+
+variables:
+  catalogo:
+    description: Catálogo de Unity Catalog donde corre el pipeline
+  pausa_trigger:
+    description: Estado del trigger por llegada de archivo (PAUSED o UNPAUSED)
+    default: PAUSED
+  warehouse_id:
+    description: SQL warehouse que usa la app para leer gold
+    lookup:
+      warehouse: Serverless Starter Warehouse
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://dbc-db0888d2-6f62.cloud.databricks.com
+    variables:
+      catalogo: pf_ledezma_dev
+      pausa_trigger: PAUSED
+
+  prod:
+    workspace:
+      host: https://dbc-db0888d2-6f62.cloud.databricks.com
+    variables:
+      catalogo: pf_ledezma
+      pausa_trigger: UNPAUSED
+    resources:
+      apps:
+        app:
+          name: planetas-habitables
+          description: ¿Hay otra Tierra? Buscador de planetas potencialmente habitables
+          source_code_path: ./app
+          resources:
+            - name: sql-warehouse
+              sql_warehouse:
+                id: ${var.warehouse_id}
+                permission: CAN_USE
+      alerts:
+        candidato_excepcional:
+          display_name: pf_ledezma · candidato excepcional sin evaluar
+          custom_summary: Apareció un planeta con ESI ≥ 0.9 que el catálogo de expertos de la UPR todavía no evalúa
+          query_text: |
+            SELECT count(*) AS candidatos
+            FROM ${var.catalogo}.gold.catalogo_publico
+            WHERE NOT evaluado_por_expertos AND NOT en_disputa AND esi >= 0.9
+          warehouse_id: ${var.warehouse_id}
+          evaluation:
+            source:
+              name: candidatos
+            comparison_operator: GREATER_THAN
+            threshold:
+              value:
+                double_value: 0
+            empty_result_state: OK
+            notification:
+              notify_on_ok: false
+              subscriptions:
+                - user_email: ${workspace.current_user.userName}
+          schedule:
+            quartz_cron_schedule: "0 0 8 * * ?"
+            timezone_id: America/Costa_Rica
+            pause_status: UNPAUSED

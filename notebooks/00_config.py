@@ -2,38 +2,32 @@
 # MAGIC %md
 # MAGIC # Proyecto final · 00 · Configuración
 # MAGIC
-# MAGIC Este notebook crea el catálogo, los esquemas y el volume donde aterrizan tus archivos.
+# MAGIC Este notebook crea el catálogo del proyecto, un esquema por capa y el volume donde aterrizan los archivos de la NASA.
 # MAGIC
-# MAGIC **Catálogo del proyecto:** `pf_ledezma`, el mismo nombre en los seis notebooks.
-# MAGIC
-# MAGIC La carpeta trae un **dataset de ejemplo** (las ventas de `samples.bakehouse`) para que corra completa desde el primer día. Tu entrega usa **tus propios datos**: cuando los tengas, súbelos al volume `landing` y cambia la ruta y el formato en `01_bronze`.
+# MAGIC El mismo código sirve para los dos ambientes y se escoge con el parámetro **catalogo**:
+# MAGIC - `pf_ledezma` → prod
+# MAGIC - `pf_ledezma_dev` → dev, donde pruebo los cambios antes de pasarlos a prod
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC CREATE CATALOG IF NOT EXISTS pf_ledezma;
-# MAGIC CREATE SCHEMA IF NOT EXISTS pf_ledezma.bronze;
-# MAGIC CREATE SCHEMA IF NOT EXISTS pf_ledezma.silver;
-# MAGIC CREATE SCHEMA IF NOT EXISTS pf_ledezma.gold;
-# MAGIC CREATE VOLUME IF NOT EXISTS pf_ledezma.bronze.landing;
+import re
+
+dbutils.widgets.text("catalogo", "pf_ledezma", "Catálogo")
+catalogo = dbutils.widgets.get("catalogo")
+assert re.fullmatch(r"[a-z0-9_]+", catalogo), f"Nombre de catálogo inválido: {catalogo}"
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## Datos de ejemplo, en lotes
-# MAGIC
-# MAGIC Cada corrida de esta celda escribe **un lote** de archivos JSON en `landing/ventas/lote_N`. Sirve para probar que tu ingesta es incremental: corre `01_bronze`, cambia el lote a 2, vuelve a correr esta celda y después `01_bronze`. La segunda vez solo debe entrar el lote nuevo.
-# MAGIC
-# MAGIC Si ya trabajas con tus datos, no necesitas esta celda.
+esquemas = {
+    "bronze": "Datos crudos tal como llegan de la NASA y la UPR",
+    "silver": "Planetas limpios, deduplicados y enriquecidos",
+    "gold": "Ranking de habitabilidad y catálogo público para la app",
+    "gobernanza": "Tablas de mapeo y funciones de seguridad",
+}
 
-# COMMAND ----------
+spark.sql(f"CREATE CATALOG IF NOT EXISTS {catalogo} COMMENT 'Proyecto final M4: buscador de planetas habitables'")
+for esquema, comentario in esquemas.items():
+    spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalogo}.{esquema} COMMENT '{comentario}'")
+spark.sql(f"CREATE VOLUME IF NOT EXISTS {catalogo}.bronze.landing COMMENT 'Archivos que llegan por lotes'")
 
-dbutils.widgets.dropdown("lote", "1", ["1", "2", "3"], "Lote de ejemplo")
-lote = int(dbutils.widgets.get("lote"))
-
-destino = f"/Volumes/pf_ledezma/bronze/landing/ventas/lote_{lote}"
-ventas = spark.table("samples.bakehouse.sales_transactions")
-(ventas.where(f"pmod(transactionID, 3) = {lote - 1}")
-       .write.mode("overwrite").json(destino))
-
-display(dbutils.fs.ls("/Volumes/pf_ledezma/bronze/landing/ventas/"))
+display(spark.sql(f"SHOW SCHEMAS IN {catalogo}"))
