@@ -45,3 +45,28 @@ targets:
               sql_warehouse:
                 id: ${var.warehouse_id}
                 permission: CAN_USE
+      alerts:
+        candidato_excepcional:
+          display_name: pf_ledezma · candidato excepcional sin evaluar
+          custom_summary: Apareció un planeta con ESI ≥ 0.9 que el catálogo de expertos de la UPR todavía no evalúa
+          query_text: |
+            SELECT count(*) AS candidatos
+            FROM ${var.catalogo}.gold.catalogo_publico
+            WHERE NOT evaluado_por_expertos AND NOT en_disputa AND esi >= 0.9
+          warehouse_id: ${var.warehouse_id}
+          evaluation:
+            source:
+              name: candidatos
+            comparison_operator: GREATER_THAN
+            threshold:
+              value:
+                double_value: 0
+            empty_result_state: OK
+            notification:
+              notify_on_ok: false
+              subscriptions:
+                - user_email: ${workspace.current_user.userName}
+          schedule:
+            quartz_cron_schedule: "0 0 8 * * ?"
+            timezone_id: America/Costa_Rica
+            pause_status: UNPAUSED
