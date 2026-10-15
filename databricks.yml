@@ -1,0 +1,31 @@
+# Bundle del proyecto: despliega el job del pipeline en dev o en prod.
+#   databricks bundle validate -t dev
+#   databricks bundle deploy -t prod
+bundle:
+  name: planetas-habitables
+
+include:
+  - resources/*.yml
+
+variables:
+  catalogo:
+    description: Catálogo de Unity Catalog donde corre el pipeline
+  pausa_trigger:
+    description: Estado del trigger por llegada de archivo (PAUSED o UNPAUSED)
+    default: PAUSED
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://dbc-db0888d2-6f62.cloud.databricks.com
+    variables:
+      catalogo: pf_ledezma_dev
+      pausa_trigger: PAUSED
+
+  prod:
+    workspace:
+      host: https://dbc-db0888d2-6f62.cloud.databricks.com
+    variables:
+      catalogo: pf_ledezma
+      pausa_trigger: UNPAUSED
