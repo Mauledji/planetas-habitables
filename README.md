@@ -73,8 +73,9 @@ Los planetas más parecidos a la Tierra según el pipeline:
 | C4 · CI/CD | Git folder conectado a este repo, rama `dev`, pull requests a `main` y bundle con targets `dev` y `prod` | `databricks.yml` |
 | C5 · Observabilidad | Auditoría, linaje y corridas del job desde las tablas del sistema, y liquid clustering con `OPTIMIZE` | `notebooks/05_observabilidad.sql` |
 | Extra | Databricks App para explorar los planetas | `app/` |
+| Extra | Alerta SQL que revisa todos los días a las 8 a.m. si apareció un planeta con ESI ≥ 0.9 que el catálogo de expertos no tiene | `databricks.yml` |
 
-No reemplacé ningún componente con temas opcionales. La app es un extra que hice porque quería que el resultado se pudiera usar, no solo ver en un notebook.
+No reemplacé ningún componente con temas opcionales. La app y la alerta son extras que hice porque quería que el resultado se pudiera usar, no solo ver en un notebook.
 
 ## Decisiones de diseño
 
