@@ -1,6 +1,7 @@
-# Bundle del proyecto: despliega el job del pipeline en dev o en prod.
+# Bundle del proyecto: despliega el job del pipeline en dev o en prod, y la app en prod.
 #   databricks bundle validate -t dev
 #   databricks bundle deploy -t prod
+#   databricks bundle run app -t prod
 bundle:
   name: planetas-habitables
 
@@ -13,6 +14,10 @@ variables:
   pausa_trigger:
     description: Estado del trigger por llegada de archivo (PAUSED o UNPAUSED)
     default: PAUSED
+  warehouse_id:
+    description: SQL warehouse que usa la app para leer gold
+    lookup:
+      warehouse: Serverless Starter Warehouse
 
 targets:
   dev:
@@ -29,3 +34,14 @@ targets:
     variables:
       catalogo: pf_ledezma
       pausa_trigger: UNPAUSED
+    resources:
+      apps:
+        app:
+          name: planetas-habitables
+          description: ¿Hay otra Tierra? Buscador de planetas potencialmente habitables
+          source_code_path: ./app
+          resources:
+            - name: sql-warehouse
+              sql_warehouse:
+                id: ${var.warehouse_id}
+                permission: CAN_USE
