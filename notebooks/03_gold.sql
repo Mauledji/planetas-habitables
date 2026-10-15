@@ -189,4 +189,6 @@ WHERE evaluado_por_expertos;
 -- MAGIC ### TU RESPUESTA
 -- MAGIC ¿Qué pregunta de negocio responde tu tabla gold? ¿Por qué elegiste tabla, view o materialized view?
 -- MAGIC
--- MAGIC _Escribe aquí._
+-- MAGIC Responde qué planetas confirmados se parecen más a la Tierra, contando también los que el catálogo de expertos de la UPR todavía no evalúa. El primero es Teegarden's Star b, con ESI 0.969, y entre los nuevos aparece GJ 3378 b, descubierto en 2026, que el catálogo de la UPR no tiene. Para saber si mi cálculo tiene sentido lo comparé con el de los expertos: coincido en el 99.5% de los planetas que ellos sí evaluaron.
+-- MAGIC
+-- MAGIC Elegí tabla porque las reglas de calidad (`NOT NULL` y `CHECK`) solo se pueden poner en una tabla Delta, no en una view, y una materialized view no se puede crear desde un notebook en serverless. La tabla se crea una vez con sus reglas y el job la refresca con `INSERT OVERWRITE`, para que las reglas no se pierdan en cada corrida.

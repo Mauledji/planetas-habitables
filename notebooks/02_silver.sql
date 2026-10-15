@@ -287,4 +287,6 @@ ORDER BY dato, planetas DESC;
 -- MAGIC ### TU RESPUESTA
 -- MAGIC ¿Qué regla usaste para los nulos y los duplicados, y por qué esa y no otra?
 -- MAGIC
--- MAGIC _Escribe aquí._
+-- MAGIC Con los duplicados tuve dos casos. El primero son copias exactas: 59 filas que venían repetidas tal cual y que simplemente quito (en las métricas pasan de 59 a 0). El segundo es el importante: un mismo planeta aparece una vez por cada artículo que lo midió, hasta 34 veces. La llave del negocio es el nombre del planeta y me quedo con la medición que la NASA marca como oficial, la más reciente. Si todavía no ha llegado la oficial (me pasó con el lote 1, donde a varios planetas les faltaba) uso la más reciente. Así quedan 6,437 planetas, uno por fila.
+-- MAGIC
+-- MAGIC Para los nulos no quise rellenar con promedios, porque cada planeta es distinto y un promedio sería inventar el dato. Primero busco el valor en otra publicación del mismo planeta, que es una medición real. Si nadie lo midió, lo calculo: la insolación con la luminosidad de la estrella y la distancia, y el radio con la masa (relación de Chen y Kipping). La distancia que no trae la NASA, como la de TRAPPIST-1, la saco del catálogo de la UPR con el join. Lo que sigue faltando se queda nulo y ese planeta no entra al ranking. Con eso la insolación pasó de faltar en el 85.3% de los planetas a 17.8%, y los planetas con datos suficientes para el ranking pasaron de 826 a 5,290.

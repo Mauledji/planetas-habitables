@@ -153,4 +153,6 @@ ORDER BY esquema, tabla, columna;
 -- MAGIC ### TU RESPUESTA
 -- MAGIC ¿Quién ve qué en tu proyecto? Explícalo en tres líneas, como se lo explicarías a un auditor.
 -- MAGIC
--- MAGIC _Escribe aquí._
+-- MAGIC 1. Yo soy el dueño del catálogo y tengo nivel `investigador` en la tabla de mapeo, así que veo todo, incluidos los 32 planetas que la NASA tiene en disputa.
+-- MAGIC 2. Cualquier otro usuario del workspace y la app (`account users`) solo puede leer `gold.catalogo_publico` y `gold.historial_mediciones`; no tiene ningún permiso en bronze, silver ni en el ranking interno, como se ve en los `SHOW GRANTS`.
+-- MAGIC 3. En el catálogo público, el row filter le esconde los planetas en disputa a quien no sea investigador: cuando me cambié a `publico` pasé de ver 5,290 planetas a 5,258, y el correo de la tabla de mapeo está etiquetado como dato personal.

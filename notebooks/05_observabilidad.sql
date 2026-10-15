@@ -115,4 +115,6 @@ ORDER BY fecha_publicacion;
 -- MAGIC ### TU RESPUESTA
 -- MAGIC ¿Por qué elegiste esa columna para el clustering? ¿Qué consulta de tu proyecto se beneficia?
 -- MAGIC
--- MAGIC _Escribe aquí._
+-- MAGIC Elegí `planeta` porque es por donde más se filtra: la ficha de la app pide todas las mediciones de un planeta (la consulta de arriba, `WHERE planeta = 'TRAPPIST-1 e'`), y silver también agrupa por planeta para quedarse con un registro de cada uno. Con liquid clustering las mediciones de un mismo planeta quedan juntas y Databricks se puede saltar los archivos que no lo tienen.
+-- MAGIC
+-- MAGIC Hoy la tabla es pequeña (unas 40 mil filas) y la diferencia casi no se nota, pero con cada lote nuevo crece. A diferencia de particionar, no tengo que escoger particiones fijas ni preocuparme por crear miles de particiones chiquitas, porque hay miles de planetas distintos.
