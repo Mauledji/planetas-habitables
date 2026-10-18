@@ -82,28 +82,54 @@ ORDER BY inicio DESC;
 -- MAGIC %md
 -- MAGIC ### 4. Liquid clustering
 -- MAGIC
--- MAGIC Mi tabla más grande es la de mediciones (unas 40 mil filas, en bronze y en silver casi igual). Uso `silver.mediciones` porque es la que se consulta: la ficha de la app pide todas las mediciones de un planeta. Por eso la agrupo por `planeta`.
+-- MAGIC Mi tabla más grande es `bronze.mediciones_raw`: todas las mediciones tal como llegan de la NASA, y crece con cada lote. La agrupo por el nombre del planeta (`pl_name`). También agrupo `silver.mediciones` por `planeta`, porque es la que consulta la ficha de la app.
 
 -- COMMAND ----------
 
-ALTER TABLE silver.mediciones CLUSTER BY (planeta);
+-- La tabla más grande del proyecto
+SELECT 'bronze.mediciones_raw' AS tabla, count(*) AS filas FROM bronze.mediciones_raw
+UNION ALL SELECT 'silver.mediciones', count(*) FROM silver.mediciones
+UNION ALL SELECT 'silver.planetas', count(*) FROM silver.planetas
+ORDER BY filas DESC;
 
 -- COMMAND ----------
 
-OPTIMIZE silver.mediciones;
+ALTER TABLE bronze.mediciones_raw CLUSTER BY (pl_name);
+
+-- COMMAND ----------
+
+OPTIMIZE bronze.mediciones_raw;
 
 -- COMMAND ----------
 
 -- clusteringColumns muestra la columna por la que se agrupan los datos
+DESCRIBE DETAIL bronze.mediciones_raw;
+
+-- COMMAND ----------
+
+DESCRIBE HISTORY bronze.mediciones_raw LIMIT 5;
+
+-- COMMAND ----------
+
+-- Lo mismo en silver, que es la que lee la app
+ALTER TABLE silver.mediciones CLUSTER BY (planeta);
+OPTIMIZE silver.mediciones;
+
+-- COMMAND ----------
+
 DESCRIBE DETAIL silver.mediciones;
 
 -- COMMAND ----------
 
-DESCRIBE HISTORY silver.mediciones LIMIT 5;
+-- Las consultas que se benefician: revisar los datos crudos de un planeta (bronze)...
+SELECT pl_name, regexp_extract(pl_refname, '>([^<]+)</a>', 1) AS publicacion, releasedate, archivo_origen
+FROM bronze.mediciones_raw
+WHERE pl_name = 'TRAPPIST-1 e'
+ORDER BY releasedate;
 
 -- COMMAND ----------
 
--- La consulta que se beneficia: la ficha de un planeta en la app
+-- ...y la ficha de un planeta en la app (silver, a través de la vista de gold)
 SELECT planeta, referencia, fecha_publicacion, es_oficial, radio_tierras, insolacion_tierras
 FROM gold.historial_mediciones
 WHERE planeta = 'TRAPPIST-1 e'
@@ -115,6 +141,6 @@ ORDER BY fecha_publicacion;
 -- MAGIC ### TU RESPUESTA
 -- MAGIC ¿Por qué elegiste esa columna para el clustering? ¿Qué consulta de tu proyecto se beneficia?
 -- MAGIC
--- MAGIC Elegí `planeta` porque es por donde más se filtra: la ficha de la app pide todas las mediciones de un planeta (la consulta de arriba, `WHERE planeta = 'TRAPPIST-1 e'`), y silver también agrupa por planeta para quedarse con un registro de cada uno. Con liquid clustering las mediciones de un mismo planeta quedan juntas y Databricks se puede saltar los archivos que no lo tienen.
+-- MAGIC Elegí el nombre del planeta (`pl_name` en bronze, `planeta` en silver) porque es por donde se consulta: cuando quiero revisar los datos crudos de un planeta, por ejemplo de qué publicación salió un valor, filtro bronze por `pl_name`; y la ficha de la app pide todas las mediciones de un planeta (las consultas de arriba, con `TRAPPIST-1 e`). Con liquid clustering las filas de un mismo planeta quedan juntas y Databricks se puede saltar los archivos que no lo tienen.
 -- MAGIC
--- MAGIC Hoy la tabla es pequeña (unas 40 mil filas) y la diferencia casi no se nota, pero con cada lote nuevo crece. A diferencia de particionar, no tengo que escoger particiones fijas ni preocuparme por crear miles de particiones chiquitas, porque hay miles de planetas distintos.
+-- MAGIC Hoy las tablas son pequeñas (unas 40 mil filas) y la diferencia casi no se nota, pero bronze crece con cada lote de la NASA. A diferencia de particionar, no tengo que escoger particiones fijas ni preocuparme por crear miles de particiones chiquitas, porque hay miles de planetas distintos.
