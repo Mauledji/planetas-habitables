@@ -1,0 +1,5 @@
+resources:
+  experiments:
+    # Aquí registra 06_ml_entrenar los modelos que compara y el elegido; 07_ml_predecir lo carga desde aquí
+    ml:
+      name: /Users/${workspace.current_user.userName}/planetas-habitables-ml-${var.catalogo}

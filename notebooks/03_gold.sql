@@ -11,6 +11,7 @@
 -- MAGIC | `gold.ranking_habitabilidad` | El ranking. Lleva las reglas de calidad (`NOT NULL` y `CHECK`) |
 -- MAGIC | `gold.catalogo_publico` | Lo que ve el público y la app. Es el ranking, pero sin reglas `CHECK` porque ahí va el row filter (ver `04_gobernanza`) |
 -- MAGIC | `gold.historial_mediciones` | Vista con todas las mediciones de los planetas publicados, para la ficha de la app |
+-- MAGIC | `gold.prediccion_habitabilidad` | Lo que dice el modelo de machine learning de los planetas sin evaluar (la llena `07_ml_predecir`) |
 -- MAGIC
 -- MAGIC La prueba de la fila mala que se rechaza está en `03b_prueba_calidad`, para que el job no la corra.
 
@@ -133,6 +134,28 @@ SELECT m.planeta, m.referencia, m.link_referencia, m.fecha_publicacion, m.es_ofi
        m.radio_tierras, m.masa_tierras, m.insolacion_tierras, m.temp_equilibrio_k, m.periodo_dias
 FROM silver.mediciones m
 WHERE m.planeta IN (SELECT planeta FROM gold.catalogo_publico);
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### Tabla para las predicciones del modelo
+-- MAGIC La llena `07_ml_predecir` (extra de machine learning). La defino aquí para que todas las tablas gold vivan en el mismo notebook.
+
+-- COMMAND ----------
+
+CREATE TABLE IF NOT EXISTS gold.prediccion_habitabilidad (
+  planeta                 STRING    NOT NULL COMMENT 'Planeta que el catálogo de expertos todavía no evalúa',
+  probabilidad            DOUBLE    NOT NULL COMMENT 'Qué tan seguro está el modelo de que es habitable (0 a 1)',
+  habitable_segun_modelo  BOOLEAN   NOT NULL,
+  habitable_segun_regla   BOOLEAN   COMMENT 'Lo que dice mi regla de zona habitable y tamaño',
+  esi                     DOUBLE,
+  modelo_run_id           STRING    NOT NULL COMMENT 'Corrida de MLflow del modelo que hizo la predicción',
+  predicho_en             TIMESTAMP NOT NULL
+)
+COMMENT 'Predicciones del modelo de machine learning para los planetas que el catálogo de expertos todavía no evalúa';
+
+ALTER TABLE gold.prediccion_habitabilidad DROP CONSTRAINT IF EXISTS probabilidad_valida;
+ALTER TABLE gold.prediccion_habitabilidad ADD CONSTRAINT probabilidad_valida CHECK (probabilidad BETWEEN 0 AND 1);
 
 -- COMMAND ----------
 
