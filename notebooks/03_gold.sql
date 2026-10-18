@@ -12,6 +12,7 @@
 -- MAGIC | `gold.catalogo_publico` | Lo que ve el público y la app. Es el ranking, pero sin reglas `CHECK` porque ahí va el row filter (ver `04_gobernanza`) |
 -- MAGIC | `gold.historial_mediciones` | Vista con todas las mediciones de los planetas publicados, para la ficha de la app |
 -- MAGIC | `gold.prediccion_habitabilidad` | Lo que dice el modelo de machine learning de los planetas sin evaluar (la llena `07_ml_predecir`) |
+-- MAGIC | `gold.modelo_publicado` | Copia del modelo elegido para que la app lo use en el simulador |
 -- MAGIC
 -- MAGIC La prueba de la fila mala que se rechaza está en `03b_prueba_calidad`, para que el job no la corra.
 
@@ -156,6 +157,16 @@ COMMENT 'Predicciones del modelo de machine learning para los planetas que el ca
 
 ALTER TABLE gold.prediccion_habitabilidad DROP CONSTRAINT IF EXISTS probabilidad_valida;
 ALTER TABLE gold.prediccion_habitabilidad ADD CONSTRAINT probabilidad_valida CHECK (probabilidad BETWEEN 0 AND 1);
+
+-- Copia del modelo para la app: en Free Edition la red de las apps no llega al almacenamiento donde MLflow
+-- guarda los artefactos, así que el job publica aquí el modelo elegido y la app lo lee por SQL
+CREATE TABLE IF NOT EXISTS gold.modelo_publicado (
+  modelo_run_id STRING    NOT NULL COMMENT 'Corrida de MLflow de donde sale el modelo',
+  modelo        BINARY    NOT NULL COMMENT 'El modelo serializado con pickle (scikit-learn 1.5.2)',
+  variables     STRING    NOT NULL COMMENT 'Las variables que pide el modelo',
+  publicado_en  TIMESTAMP NOT NULL
+)
+COMMENT 'Copia del modelo elegido para que la app lo use (solo lo escribe 07_ml_predecir)';
 
 -- COMMAND ----------
 

@@ -49,6 +49,8 @@ GRANT SELECT ON TABLE gold.catalogo_publico TO `account users`;
 GRANT SELECT ON TABLE gold.historial_mediciones TO `account users`;
 -- Las predicciones del modelo no incluyen planetas en disputa, así que no necesitan row filter
 GRANT SELECT ON TABLE gold.prediccion_habitabilidad TO `account users`;
+-- La copia del modelo que usa el simulador de la app
+GRANT SELECT ON TABLE gold.modelo_publicado TO `account users`;
 
 -- COMMAND ----------
 

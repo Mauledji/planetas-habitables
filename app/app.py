@@ -163,7 +163,8 @@ def como_funciona() -> None:
 3. **Gold:** el ESI (parecido a la Tierra) y si el planeta está en la zona habitable de una estrella como el Sol.
 4. **Machine learning:** un modelo (gradient boosting) aprende del criterio de los expertos con los planetas que ellos sí
    evaluaron y le gana a mi regla, porque aprende que la zona habitable cambia según la temperatura de la estrella.
-   El job lo usa para evaluar los planetas nuevos y este simulador lo carga desde MLflow.
+   El modelo vive en MLflow; el job lo usa para evaluar los planetas nuevos y publica una copia en gold para este
+   simulador (en Free Edition la app no puede bajar los archivos de MLflow).
 5. Unity Catalog decide quién ve qué: los planetas que la NASA tiene en disputa no se publican aquí.
 
 **ESI**: `1 − √(½·[((S−1)/(S+1))² + ((R−1)/(R+1))²])`, con S = luz que recibe y R = radio, comparados con la Tierra.

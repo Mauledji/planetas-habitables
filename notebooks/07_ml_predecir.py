@@ -4,7 +4,7 @@
 # MAGIC
 # MAGIC Es la cuarta tarea del job: después de gold, usa el modelo elegido en `06_ml_entrenar` para evaluar los planetas que el catálogo de expertos todavía no tiene. Cuando llega un lote nuevo de la NASA, los planetas nuevos se evalúan solos, sin reentrenar.
 # MAGIC
-# MAGIC El modelo se carga desde el experimento de MLflow con `runs:/<run_id>/modelo` (en Free Edition no se puede registrar en Unity Catalog). Cada predicción guarda qué corrida del modelo la hizo.
+# MAGIC El modelo se carga desde el experimento de MLflow con `runs:/<run_id>/modelo` (en Free Edition no se puede registrar en Unity Catalog). Cada predicción guarda qué corrida del modelo la hizo, y al final se publica una copia del modelo para el simulador de la app.
 
 # COMMAND ----------
 
@@ -21,6 +21,7 @@ dbutils.library.restartPython()
 
 # COMMAND ----------
 
+import pickle
 import re
 
 import mlflow
@@ -103,7 +104,23 @@ spark.sql(f"INSERT OVERWRITE {catalogo}.gold.prediccion_habitabilidad BY NAME SE
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### 3. Resultado
+# MAGIC ### 3. Publicar el modelo para la app
+# MAGIC La app usa el modelo en el simulador, pero en Free Edition la red de las apps no llega al almacenamiento donde MLflow guarda los artefactos (probado: `Max retries exceeded` al bajarlos desde la app). Por eso dejo una copia del modelo elegido en `gold.modelo_publicado` y la app la lee por SQL, igual que el resto de los datos.
+
+# COMMAND ----------
+
+modelo_serializado = pickle.dumps(modelo)
+(spark.createDataFrame([(run_id, bytearray(modelo_serializado), ", ".join(variables))],
+                       "modelo_run_id string, modelo binary, variables string")
+      .withColumn("publicado_en", F.current_timestamp())
+      .createOrReplaceTempView("modelo_nuevo"))
+spark.sql(f"INSERT OVERWRITE {catalogo}.gold.modelo_publicado BY NAME SELECT * FROM modelo_nuevo")
+print(f"Modelo publicado: corrida {run_id}, {len(modelo_serializado) / 1024:.0f} KB")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### 4. Resultado
 
 # COMMAND ----------
 

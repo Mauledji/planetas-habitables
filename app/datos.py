@@ -1,5 +1,6 @@
 """Acceso a las tablas gold y al modelo, con la identidad de la app (su service principal)."""
 import os
+import pickle
 import re
 
 import pandas as pd
@@ -51,11 +52,16 @@ def historial(planeta: str) -> pd.DataFrame:
 
 @st.cache_resource(show_spinner="Cargando el modelo...")
 def cargar_modelo(run_id: str):
-    """El mismo modelo que usa el job, cargado desde su corrida en MLflow (la app tiene permiso de lectura)."""
-    import mlflow
+    """El mismo modelo que usa el job, leído de gold.modelo_publicado.
 
-    mlflow.set_tracking_uri("databricks")
-    return mlflow.sklearn.load_model(f"runs:/{run_id}/modelo")
+    En Free Edition la red de las apps no llega al almacenamiento donde MLflow guarda los artefactos,
+    así que el job publica una copia del modelo en gold. Solo el job escribe esa tabla.
+    """
+    fila = consultar(f"SELECT modelo FROM {CATALOGO}.gold.modelo_publicado WHERE modelo_run_id = :run_id",
+                     {"run_id": run_id})
+    if fila.empty:
+        raise LookupError(f"No hay un modelo publicado para la corrida {run_id}")
+    return pickle.loads(fila.iloc[0].modelo)
 
 
 def modelo_actual(prediccion: pd.DataFrame):

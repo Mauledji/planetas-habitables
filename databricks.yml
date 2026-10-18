@@ -45,11 +45,6 @@ targets:
               sql_warehouse:
                 id: ${var.warehouse_id}
                 permission: CAN_USE
-            # La app carga el modelo del experimento para el simulador: solo lectura
-            - name: experimento-ml
-              experiment:
-                experiment_id: ${resources.experiments.ml.id}
-                permission: CAN_READ
       alerts:
         candidato_excepcional:
           display_name: pf_ledezma · candidato excepcional sin evaluar
