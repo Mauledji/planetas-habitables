@@ -13,7 +13,7 @@
 -- MAGIC | Perfil | Qué puede leer | ¿Ve los planetas en disputa? |
 -- MAGIC |---|---|---|
 -- MAGIC | Yo, con nivel `investigador` en la tabla de mapeo | Todo el catálogo | Sí |
--- MAGIC | Perfil de lectura: `account users` (cualquier usuario del workspace y la app) | Solo `gold.catalogo_publico` y `gold.historial_mediciones` | No |
+-- MAGIC | Perfil de lectura: `account users` (cualquier usuario del workspace y la app) | Solo lo publicado en gold: `catalogo_publico`, `historial_mediciones` y `prediccion_habitabilidad` | No |
 
 -- COMMAND ----------
 
@@ -47,6 +47,10 @@ GRANT USE CATALOG ON CATALOG IDENTIFIER(:catalogo) TO `account users`;
 GRANT USE SCHEMA ON SCHEMA gold TO `account users`;
 GRANT SELECT ON TABLE gold.catalogo_publico TO `account users`;
 GRANT SELECT ON TABLE gold.historial_mediciones TO `account users`;
+-- Las predicciones del modelo no incluyen planetas en disputa, así que no necesitan row filter
+GRANT SELECT ON TABLE gold.prediccion_habitabilidad TO `account users`;
+-- La copia del modelo que usa el simulador de la app
+GRANT SELECT ON TABLE gold.modelo_publicado TO `account users`;
 
 -- COMMAND ----------
 
@@ -154,5 +158,5 @@ ORDER BY esquema, tabla, columna;
 -- MAGIC ¿Quién ve qué en tu proyecto? Explícalo en tres líneas, como se lo explicarías a un auditor.
 -- MAGIC
 -- MAGIC 1. Yo soy el dueño del catálogo y tengo nivel `investigador` en la tabla de mapeo, así que veo todo, incluidos los 32 planetas que la NASA tiene en disputa.
--- MAGIC 2. Cualquier otro usuario del workspace y la app (`account users`) solo puede leer `gold.catalogo_publico` y `gold.historial_mediciones`; no tiene ningún permiso en bronze, silver ni en el ranking interno, como se ve en los `SHOW GRANTS`.
+-- MAGIC 2. Cualquier otro usuario del workspace y la app (`account users`) solo puede leer lo publicado en gold (`catalogo_publico`, `historial_mediciones` y las predicciones del modelo); no tiene ningún permiso en bronze, silver ni en el ranking interno, como se ve en los `SHOW GRANTS`.
 -- MAGIC 3. En el catálogo público, el row filter le esconde los planetas en disputa a quien no sea investigador: cuando me cambié a `publico` pasé de ver 5,290 planetas a 5,258, y el correo de la tabla de mapeo está etiquetado como dato personal.

@@ -1,5 +1,6 @@
-"""Acceso a las tablas gold desde la app, con la identidad de la app (su service principal)."""
+"""Acceso a las tablas gold y al modelo, con la identidad de la app (su service principal)."""
 import os
+import pickle
 import re
 
 import pandas as pd
@@ -31,6 +32,13 @@ def catalogo() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=600, show_spinner=False)
+def predicciones() -> pd.DataFrame:
+    """Lo que dice el modelo de los planetas que el catálogo de expertos todavía no evalúa."""
+    return consultar(f"""SELECT planeta, probabilidad, habitable_segun_modelo, modelo_run_id, predicho_en
+                         FROM {CATALOGO}.gold.prediccion_habitabilidad""")
+
+
+@st.cache_data(ttl=600, show_spinner=False)
 def historial(planeta: str) -> pd.DataFrame:
     return consultar(
         f"""SELECT fecha_publicacion, referencia, link_referencia, es_oficial,
@@ -40,3 +48,25 @@ def historial(planeta: str) -> pd.DataFrame:
             ORDER BY fecha_publicacion DESC""",
         {"planeta": planeta},
     )
+
+
+@st.cache_resource(show_spinner="Cargando el modelo...")
+def cargar_modelo(run_id: str):
+    """El mismo modelo que usa el job, leído de gold.modelo_publicado.
+
+    En Free Edition la red de las apps no llega al almacenamiento donde MLflow guarda los artefactos,
+    así que el job publica una copia del modelo en gold. Solo el job escribe esa tabla.
+    """
+    fila = consultar(f"SELECT modelo FROM {CATALOGO}.gold.modelo_publicado WHERE modelo_run_id = :run_id",
+                     {"run_id": run_id})
+    if fila.empty:
+        raise LookupError(f"No hay un modelo publicado para la corrida {run_id}")
+    return pickle.loads(fila.iloc[0].modelo)
+
+
+def modelo_actual(prediccion: pd.DataFrame):
+    """El modelo con el que se hicieron las predicciones más recientes, o None si todavía no hay."""
+    if prediccion.empty:
+        return None
+    run_id = prediccion.sort_values("predicho_en").modelo_run_id.iloc[-1]
+    return cargar_modelo(run_id)

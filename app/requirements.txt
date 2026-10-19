@@ -3,3 +3,4 @@ databricks-sdk
 streamlit==1.38.0
 pandas
 plotly==5.24.1
+scikit-learn==1.5.2
