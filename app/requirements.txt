@@ -1,6 +1,8 @@
-databricks-sql-connector
+databricks-sql-connector==4.6.0
 databricks-sdk
-streamlit==1.38.0
-pandas
+streamlit==1.65.0
+pandas==2.2.3
+numpy==2.4.6
+pyarrow==25.0.1
 plotly==5.24.1
 scikit-learn==1.5.2
