@@ -128,7 +128,8 @@ AS SELECT * FROM gold.ranking_habitabilidad LIMIT 0;
 
 INSERT OVERWRITE gold.catalogo_publico SELECT * FROM gold.ranking_habitabilidad;
 
-CREATE OR REPLACE VIEW gold.historial_mediciones
+-- IF NOT EXISTS y no OR REPLACE: reemplazar la vista borra los permisos que le da 04_gobernanza
+CREATE VIEW IF NOT EXISTS gold.historial_mediciones
 COMMENT 'Todas las mediciones de los planetas publicados, para la ficha de la app'
 AS
 SELECT m.planeta, m.referencia, m.link_referencia, m.fecha_publicacion, m.es_oficial,
