@@ -132,7 +132,7 @@ div:has(> img[data-testid="stHeaderLogo"])::after, [data-testid="stLogoLink"]::a
 }
 
 /* ---------- Tarjetas (contenedores con key) ---------- */
-.st-key-ficha, .st-key-simulador, .st-key-veredicto, .st-key-dialogo_ficha,
+.st-key-ficha, .st-key-dialogo_ficha,
 [class*="st-key-tarjeta_"] {
   background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio);
   padding: 1.3rem 1.35rem 1.2rem 1.35rem; backdrop-filter: blur(10px);
@@ -203,18 +203,7 @@ div:has(> img[data-testid="stHeaderLogo"])::after, [data-testid="stLogoLink"]::a
 .leyenda__escala { width: 120px; height: 6px; border-radius: 999px;
   background: linear-gradient(90deg, #FF5A36, #FF8A4C, #FFC47A, #FFE9C4, #F4F6FF, #AFC6FF); }
 
-/* ---------- Simulador ---------- */
-.sim-nombre { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.015em; color: var(--texto); }
-.tamanos { display: flex; align-items: flex-end; gap: 1.6rem; min-height: 120px; margin: 1rem 0 0.6rem 0;
-  padding: 0.8rem 1rem; border-radius: 14px; background: rgba(6, 10, 20, 0.55); border: 1px solid var(--linea); }
-.tamanos figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.45rem; }
-.tamanos figcaption { font-family: var(--mono); font-size: 0.74rem; color: var(--tenue); }
-.veredicto { display: flex; align-items: flex-end; gap: 1rem; margin: 0.2rem 0 0.9rem 0; }
-.veredicto__numero { font-family: var(--mono); font-size: clamp(3rem, 2rem + 3vw, 4.4rem); font-weight: 500;
-  line-height: 0.95; letter-spacing: -0.04em; color: var(--modelo); text-shadow: 0 0 28px rgba(177, 151, 252, 0.35); }
-.veredicto__texto { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.9rem; color: var(--tenue);
-  padding-bottom: 0.35rem; }
-.veredicto__texto strong { font-size: 1.25rem; color: var(--texto); font-weight: 600; }
+/* ---------- Tarjetas pequeñas de planetas ---------- */
 .mini-nombre { margin: 0.7rem 0 0 0; font-weight: 600; font-size: 0.98rem; color: var(--texto); line-height: 1.25; }
 .mini-dato { margin: 0.2rem 0 0 0; font-family: var(--mono); font-size: 0.74rem; color: var(--tenue); }
 .ficha-cabeza .mini-nombre { margin-top: 0; }

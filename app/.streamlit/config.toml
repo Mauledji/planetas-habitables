@@ -28,5 +28,9 @@ chartCategoricalColors = ["#7AA2FF", "#3DDC97", "#B197FC", "#F7B955", "#6FD3F2",
 [client]
 toolbarMode = "minimal"
 
+[server]
+# Sirve app/static/ (ahí va Three.js para la vista 3D del simulador)
+enableStaticServing = true
+
 [browser]
 gatherUsageStats = false

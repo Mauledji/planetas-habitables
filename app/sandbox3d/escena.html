@@ -1,0 +1,55 @@
+<div class="sbx" data-estado="cargando">
+  <div class="sbx__lienzo"></div>
+  <div class="sbx__etiquetas" aria-hidden="true">
+    <span class="etq etq--estrella"><b class="etq__nombre"></b><span class="etq__detalle"></span></span>
+    <span class="etq etq--zona">zona habitable</span>
+    <span class="etq etq--regla">mi regla</span>
+    <span class="etq etq--planeta"></span>
+  </div>
+
+  <header class="panel sbx__planeta">
+    <p class="ceja">Tu planeta</p>
+    <h3 class="nombre"></h3>
+    <p class="aspecto"></p>
+  </header>
+
+  <section class="panel sbx__veredicto" aria-live="polite">
+    <div class="anillo">
+      <svg viewBox="0 0 80 80" aria-hidden="true">
+        <circle class="anillo__fondo" cx="40" cy="40" r="34"></circle>
+        <circle class="anillo__valor" cx="40" cy="40" r="34"></circle>
+      </svg>
+      <span class="anillo__texto"></span>
+    </div>
+    <div class="veredicto">
+      <p class="ceja ceja--modelo">Según el modelo</p>
+      <p class="veredicto__titulo"></p>
+      <div class="chips"><span class="chip chip--regla"></span><span class="chip chip--acuerdo"></span></div>
+      <p class="veredicto__datos"></p>
+    </div>
+  </section>
+
+  <p class="sbx__pista">Arrastra para girar · Ctrl + rueda para acercar</p>
+  <p class="sbx__aviso">Cargando la vista 3D…</p>
+
+  <div class="sbx__leyenda" aria-hidden="true">
+    <span><i class="muestra muestra--zona"></i>zona habitable de esta estrella</span>
+    <span><i class="muestra muestra--regla"></i>mi regla (la zona del Sol)</span>
+    <span><i class="muestra muestra--orbita"></i>órbita del planeta</span>
+  </div>
+
+  <div class="panel sbx__controles">
+    <label class="control">
+      <span class="control__titulo">Radio <b class="control__valor" data-valor="radio"></b></span>
+      <input type="range" name="radio" min="0.3" max="4" step="0.01" aria-label="Radio del planeta, la Tierra es 1">
+    </label>
+    <label class="control">
+      <span class="control__titulo">Luz que recibe <b class="control__valor" data-valor="luz"></b></span>
+      <input type="range" name="luz" min="0" max="1000" step="1" aria-label="Luz que recibe, la Tierra es 1">
+    </label>
+    <label class="control">
+      <span class="control__titulo">Su estrella <b class="control__valor" data-valor="temp"></b></span>
+      <input type="range" name="temp" min="2500" max="7000" step="10" aria-label="Temperatura de la estrella en Kelvin">
+    </label>
+  </div>
+</div>
