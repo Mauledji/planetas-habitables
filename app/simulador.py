@@ -1,4 +1,4 @@
-"""El sandbox: traer un planeta (real o inventado), cambiarle valores y ver qué dice el modelo."""
+"""El sandbox: traer un planeta (real o inventado), cambiarle valores y ver en 3D qué dice el modelo."""
 from html import escape
 
 import numpy as np
@@ -8,27 +8,49 @@ import streamlit as st
 import calculos
 import componentes as c
 import graficas
+import sandbox3d
 
-OPCIONES_LUZ = [round(float(v), 3) for v in np.logspace(np.log10(calculos.LUZ_MIN), np.log10(calculos.LUZ_MAX), 121)]
-TIERRA = {"planeta": "Tierra", "radio_tierras": 1.0, "insolacion_tierras": 1.0, "temp_estrella_k": 5778}
-PRESETS = ["Tierra", "TRAPPIST-1 e", "Teegarden's Star b", "Kepler-452 b", "Gliese 48 b"]
-TEXTO_REGLA = {"conservador": "Habitable (conservador)", "optimista": "Habitable (optimista)", "no": "No habitable"}
-TAM_TIERRA = 46
+TIERRA = {"planeta": "Tierra", "estrella": "El Sol", "radio_tierras": 1.0, "insolacion_tierras": 1.0,
+          "temp_estrella_k": 5778}
+PRESETS = ["Tierra", "TRAPPIST-1 e", "Proxima Cen b", "Teegarden's Star b", "Kepler-452 b", "Gliese 48 b"]
+TEMP_MIN, TEMP_MAX = 2500, 7000
+LARGO_NOMBRE = 120
+
+
+def _texto(valor) -> str | None:
+    return None if valor is None or pd.isna(valor) else str(valor)[:LARGO_NOMBRE]
+
+
+def _guardar(nombre: str, estrella: str | None, radio: float, luz: float, temp: float) -> None:
+    st.session_state["sim_nombre"] = nombre
+    st.session_state["sim_estrella"] = estrella
+    st.session_state["sim_radio"] = float(np.clip(radio, calculos.RADIO_MIN, calculos.RADIO_MAX))
+    st.session_state["sim_luz"] = float(np.clip(luz, calculos.LUZ_MIN, calculos.LUZ_MAX))
+    st.session_state["sim_temp"] = int(np.clip(round(temp / 10) * 10, TEMP_MIN, TEMP_MAX))
 
 
 def _poner(planeta: dict) -> None:
-    luz = max(float(planeta["insolacion_tierras"]), 1e-6)
+    """Pone un planeta en el simulador. Sube la versión para que la vista 3D lo tome."""
     temp = planeta.get("temp_estrella_k")
-    temp = 5778 if temp is None or pd.isna(temp) else float(temp)
-    st.session_state["sim_nombre"] = planeta["planeta"]
-    st.session_state["sim_radio"] = float(np.clip(round(planeta["radio_tierras"], 2), calculos.RADIO_MIN,
-                                                  calculos.RADIO_MAX))
-    st.session_state["sim_luz"] = min(OPCIONES_LUZ, key=lambda o: abs(np.log10(o) - np.log10(luz)))
-    st.session_state["sim_temp"] = int(np.clip(round(temp / 10) * 10, 2500, 7000))
+    _guardar(str(planeta["planeta"]), _texto(planeta.get("estrella")), float(planeta["radio_tierras"]),
+             max(float(planeta["insolacion_tierras"]), 1e-6), 5778.0 if temp is None or pd.isna(temp) else float(temp))
+    st.session_state["sim_version"] = st.session_state.get("sim_version", 0) + 1
+
+
+def _desde_3d() -> None:
+    """Callback: lo que se movió en la vista 3D (llega al soltar un control). Se valida porque viene del navegador."""
+    valores = (st.session_state.get("sim3d") or {}).get("planeta")
+    if not isinstance(valores, dict):
+        return
+    try:
+        _guardar(_texto(valores.get("nombre")) or "Tu planeta", _texto(valores.get("estrella")),
+                 float(valores["radio"]), float(valores["luz"]), float(valores["temp"]))
+    except (KeyError, TypeError, ValueError):
+        return
 
 
 def cargar(planeta: dict) -> None:
-    """Callback: pone los datos de un planeta en los controles y pide abrir el simulador."""
+    """Callback: pone los datos de un planeta en el simulador y pide abrir la página."""
     _poner(planeta)
     st.session_state["ir_a"] = "experimentar"
 
@@ -36,12 +58,6 @@ def cargar(planeta: dict) -> None:
 def iniciar() -> None:
     if "sim_nombre" not in st.session_state:
         _poner(TIERRA)
-
-
-def _inventado() -> None:
-    nombre = st.session_state["sim_nombre"]
-    if not nombre.startswith("Tu planeta"):
-        st.session_state["sim_nombre"] = "Tu planeta" if nombre == "Tierra" else f"Tu planeta (a partir de {nombre})"
 
 
 def _fila(df: pd.DataFrame, nombre: str) -> dict | None:
@@ -60,62 +76,6 @@ def _presets(df: pd.DataFrame) -> None:
                 st.button(nombre, key=f"preset_{nombre}", on_click=_poner, args=(fila,), type="secondary")
 
 
-def _tamanos(radio: float, tipo: str) -> str:
-    """La Tierra y el planeta lado a lado, a escala (con un límite para que quepan)."""
-    tam = int(np.clip(TAM_TIERRA * radio, 14, 150))
-    return (f'<div class="tamanos"><figure>{c.esfera("templado", TAM_TIERRA)}<figcaption>Tierra</figcaption></figure>'
-            f'<figure>{c.esfera(tipo, tam)}<figcaption>{radio:.2f} ×</figcaption></figure></div>')
-
-
-def _controles() -> tuple[float, float, float]:
-    radio, luz = st.session_state["sim_radio"], st.session_state["sim_luz"]
-    tipo = calculos.aspecto(radio, luz)
-    with st.container(key="simulador"):
-        st.html(f'<p class="ceja">Tu planeta</p><h3 class="sim-nombre">{escape(st.session_state["sim_nombre"])}</h3>'
-                f'<p class="ficha-sub">{escape(calculos.ASPECTOS[tipo])} <span class="tenue">· ilustración</span></p>'
-                + _tamanos(radio, tipo))
-        radio = st.slider(":material/straighten: Radio (Tierra = 1)", calculos.RADIO_MIN, calculos.RADIO_MAX,
-                          step=0.01, key="sim_radio", on_change=_inventado, persist_state="session")
-        luz = st.select_slider(":material/light_mode: Luz que recibe (Tierra = 1)", options=OPCIONES_LUZ,
-                               key="sim_luz", on_change=_inventado, format_func=lambda v: f"{v:.2f}",
-                               persist_state="session")
-        temp = st.slider(":material/thermostat: Temperatura de la estrella (K)", 2500, 7000, step=10, key="sim_temp",
-                         on_change=_inventado, persist_state="session",
-                         help="El Sol tiene 5,778 K. Las enanas rojas, menos de 4,000 K.")
-    return radio, luz, temp
-
-
-def _veredicto(modelo, radio: float, luz: float, temp: float) -> None:
-    regla = calculos.segun_regla(radio, luz)
-    temp_planeta = calculos.temperatura_equilibrio(luz)
-    with st.container(key="veredicto"):
-        if modelo is None:
-            st.html('<p class="ceja">Veredicto del modelo</p><p class="tenue">El modelo no está disponible en este '
-                    'momento. Mi regla y el ESI sí funcionan.</p>')
-            prob = None
-        else:
-            prob = calculos.probabilidad(modelo, radio, luz, temp)
-            habitable = prob >= 0.5
-            coinciden = habitable == (regla != "no")
-            st.html(
-                '<p class="ceja">Veredicto del modelo</p>'
-                f'<div class="veredicto"><span class="veredicto__numero">{escape(c.porcentaje(prob))}</span>'
-                f'<span class="veredicto__texto">de seguridad en que es habitable<strong>'
-                f'{"Habitable" if habitable else "No habitable"}</strong></span></div>'
-                + c.barra(prob)
-                + '<div class="chips" style="margin-top:1rem">'
-                + c.chip("El modelo y mi regla coinciden" if coinciden else "El modelo y mi regla no coinciden",
-                         "habitable" if coinciden else "caliente")
-                + "</div>"
-            )
-        st.html(c.datos_grid([
-            ("Mi regla (zona del Sol)", TEXTO_REGLA[regla]),
-            ("Parecido a la Tierra (ESI)", f"{calculos.esi(radio, luz):.3f}"),
-            ("Temperatura estimada", f"{temp_planeta:,.0f} K ({temp_planeta - 273.15:,.0f} °C)"),
-        ]) + '<p class="nota">Mi regla usa la zona habitable de una estrella como el Sol. El modelo aprendió de los '
-             'expertos que esa zona se corre según la temperatura de la estrella.</p>')
-
-
 def _mapa(df: pd.DataFrame, modelo, radio: float, luz: float, temp: float) -> None:
     if modelo is None:
         return
@@ -126,10 +86,9 @@ def _mapa(df: pd.DataFrame, modelo, radio: float, luz: float, temp: float) -> No
         st.plotly_chart(graficas.mapa_modelo(luz_grilla, radio_grilla, prob, parecidos, (luz, radio)),
                         theme=None, config=graficas.CONFIG, width="stretch")
         st.html('<p class="nota">Lo violeta es donde el modelo considera habitable un planeta alrededor de esta '
-                'estrella. Baja la temperatura de la estrella: con una enana roja, la zona se corre hacia planetas que '
-                'reciben menos luz. Ojo: casi no hay planetas del tamaño de la Tierra alrededor de estrellas como el '
-                'Sol (son los más difíciles de detectar), así que ahí el modelo duda más y la misma Tierra no le sale '
-                'al 100%.</p>')
+                'estrella, y la línea marca dónde pasa de "no" a "sí". Ojo: casi no hay planetas del tamaño de la '
+                'Tierra alrededor de estrellas como el Sol (son los más difíciles de detectar), así que ahí el modelo '
+                'duda más y la misma Tierra no le sale al 100%.</p>')
 
 
 def _parecidos(df: pd.DataFrame, radio: float, luz: float, temp: float) -> None:
@@ -150,13 +109,18 @@ def _parecidos(df: pd.DataFrame, radio: float, luz: float, temp: float) -> None:
 
 def pagina(df: pd.DataFrame, modelo) -> None:
     c.encabezado("Sandbox del modelo", "Experimentar",
-                 "Arma un planeta o trae uno real, mueve sus valores y mira qué diría el modelo. Aprendió del "
-                 "criterio de los expertos de la UPR con los planetas que ellos sí evaluaron.")
+                 "Arma un planeta o trae uno real y mueve sus valores: la estrella, su zona habitable y el planeta "
+                 "cambian en vivo, y el modelo da su veredicto al instante. Aprendió del criterio de los expertos de "
+                 "la UPR con los planetas que ellos sí evaluaron.")
     _presets(df)
-    izquierda, derecha = st.columns([5, 7], gap="large")
-    with izquierda:
-        radio, luz, temp = _controles()
-    with derecha:
-        _veredicto(modelo, radio, luz, temp)
+    sandbox3d.mostrar({"nombre": st.session_state["sim_nombre"], "estrella": st.session_state["sim_estrella"],
+                       "radio": st.session_state["sim_radio"], "luz": st.session_state["sim_luz"],
+                       "temp": st.session_state["sim_temp"]},
+                      st.session_state["sim_version"], modelo, _desde_3d)
+    st.html('<p class="nota">La franja verde es la zona habitable de esa estrella según Kopparapu et al. (2014): con '
+            'una enana roja se corre hacia donde llega menos luz. La línea punteada es mi regla, que siempre usa la '
+            'zona del Sol, y por eso a veces no coincide con el modelo. Las distancias y los tamaños no están a escala: '
+            'el planeta se dibuja a la distancia que le daría esa luz.</p>')
+    radio, luz, temp = (st.session_state[clave] for clave in ("sim_radio", "sim_luz", "sim_temp"))
     _mapa(df, modelo, radio, luz, temp)
     _parecidos(df, radio, luz, temp)

@@ -36,10 +36,11 @@ def _tarjeta(df: pd.DataFrame, pred: pd.DataFrame, p: pd.Series, clave: str, tex
     with st.container(key=f"tarjeta_{clave}"):
         tipo = calculos.aspecto(p.radio_tierras, p.insolacion_tierras)
         estrella = "estrella sin dato" if pd.isna(p.temp_estrella_k) else f"estrella de {p.temp_estrella_k:,.0f} K"
+        anio = "sin dato" if pd.isna(p.anio_descubrimiento) else str(int(p.anio_descubrimiento))
         regla = "Mi regla: sí" if p.potencialmente_habitable != "no" else "Mi regla: no"
         st.html(
             f'<div class="ficha-cabeza">{c.esfera(tipo, 52)}<div><p class="mini-nombre">{escape(p.planeta)}</p>'
-            f'<p class="mini-dato">{escape(estrella)} · {int(p.anio_descubrimiento)}</p></div></div>'
+            f'<p class="mini-dato">{escape(estrella)} · {anio}</p></div></div>'
             f'<div class="nuevo-prob"><span>{escape(c.porcentaje(p.probabilidad))}</span>habitable según el modelo'
             '</div>'
             + c.barra(p.probabilidad)
@@ -94,6 +95,8 @@ def pagina(df: pd.DataFrame, pred: pd.DataFrame) -> None:
                           width="stretch", height=420, on_select="rerun", selection_mode="single-row",
                           key="tabla_nuevos")
     filas = evento.selection.rows
-    if filas and st.session_state.get("_ultimo_tabla_nuevos") != filas[0]:
+    if not filas:  # al deseleccionar, la misma fila puede volver a abrir su ficha
+        st.session_state.pop("_ultimo_tabla_nuevos", None)
+    elif st.session_state.get("_ultimo_tabla_nuevos") != filas[0]:
         st.session_state["_ultimo_tabla_nuevos"] = filas[0]
         _dialogo(df, pred, juntos.iloc[filas[0]].planeta)
