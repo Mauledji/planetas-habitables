@@ -1,4 +1,4 @@
-# ¿Hay otra Tierra? 🪐
+# ¿Hay otra Tierra?
 
 Proyecto final del Módulo 4 (Gestión y gobernanza de datos con Unity Catalog) del Técnico en Ingeniería de Datos con Databricks, Universidad Latina de Costa Rica.
 
@@ -96,9 +96,14 @@ Los planetas más parecidos a la Tierra según el pipeline:
 
 ## La app: un sandbox
 
-- **Explorar:** el mapa de planetas según la luz que reciben y su tamaño. Haces click en cualquier punto (o en una fila de la tabla) y se abre su ficha, con todas sus mediciones publicadas.
-- **Experimentar:** desde la ficha, "Experimentar con este planeta" lo carga en el simulador. Cambias el radio, la luz o la temperatura de la estrella y el modelo responde al instante. El mapa muestra dónde el modelo considera habitable un planeta para esa estrella: con una enana roja, la zona se corre hacia planetas que reciben menos luz. Abajo salen los planetas reales más parecidos.
-- **Nuevos descubrimientos:** los planetas que el catálogo de expertos no tiene, con lo que dicen mi regla y el modelo.
+Tiene cuatro secciones en la barra de arriba:
+
+- **Explorar:** el mapa de planetas según la luz que reciben y su tamaño, cada uno con el color de su estrella (rojizo si es una enana roja, blanco azulado si es caliente). Haces click en un punto, en una fila del ranking o lo buscas por nombre, y se abre su ficha con todas sus mediciones publicadas.
+- **Experimentar:** desde la ficha, "Experimentar con este planeta" lo carga en el simulador. Cambias el radio, la luz o la temperatura de la estrella y el modelo responde al instante, junto con lo que dice mi regla. El mapa muestra dónde el modelo considera habitable un planeta para esa estrella: con una enana roja, la zona se corre hacia planetas que reciben menos luz. Abajo salen los planetas reales más parecidos.
+- **Nuevos descubrimientos:** los planetas que el catálogo de expertos todavía no tiene: los candidatos más fuertes según el modelo y los casos donde el modelo y mi regla no coinciden.
+- **Cómo funciona:** el recorrido de los datos, de la NASA a la app, con los números reales de cada capa.
+
+El diseño es oscuro, como un observatorio de noche, y los colores significan lo mismo en toda la app: verde es la zona habitable y violeta es lo que dice el modelo. Los planetas de las fichas son una ilustración según su tamaño y la luz que reciben, no una foto.
 
 ## Componentes del proyecto
 
@@ -168,8 +173,9 @@ Para probar cambios sin tocar prod, usa `-t dev`. Ahí el trigger está en pausa
 
 ```
 ├── app/
-│   ├── app.py                    la app: explorar, experimentar, nuevos descubrimientos
-│   ├── simulador.py              el sandbox
+│   ├── app.py                    barra de navegación y carga de datos
+│   ├── explorar.py · simulador.py · nuevos.py · como_funciona.py    una por sección
+│   ├── ficha.py · componentes.py · estilos.py    la ficha del planeta, piezas de HTML y el tema
 │   ├── graficas.py · calculos.py · datos.py
 ├── docs/                         imágenes del README
 ├── notebooks/

@@ -1,7 +1,32 @@
+# Tema "observatorio de noche": fondo casi negro, un solo acento para lo interactivo
+# y colores con significado (verde = zona habitable, violeta = modelo).
 [theme]
 base = "dark"
-primaryColor = "#38bdf8"
-backgroundColor = "#070b1a"
-secondaryBackgroundColor = "#111a33"
-textColor = "#e6ecff"
-font = "sans serif"
+primaryColor = "#7AA2FF"
+backgroundColor = "#060A14"
+secondaryBackgroundColor = "#0F1729"
+textColor = "#E8EEF8"
+borderColor = "#1D2942"
+showWidgetBorder = true
+baseRadius = "0.75rem"
+buttonRadius = "full"
+linkColor = "#9DB8FF"
+font = "'Space Grotesk':https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
+headingFontWeights = [700, 600, 600, 600]
+headingFontSizes = ["3rem", "1.9rem", "1.35rem", "1.1rem"]
+metricValueFontSize = "1.9rem"
+greenColor = "#3DDC97"
+violetColor = "#B197FC"
+blueColor = "#7AA2FF"
+orangeColor = "#F7B955"
+redColor = "#F2706B"
+grayColor = "#56627A"
+dataframeHeaderBackgroundColor = "#0D1526"
+chartCategoricalColors = ["#7AA2FF", "#3DDC97", "#B197FC", "#F7B955", "#6FD3F2", "#F2706B"]
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
