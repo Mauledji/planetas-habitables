@@ -80,6 +80,8 @@ def mostrar(df: pd.DataFrame, pred: pd.DataFrame, nombre: str | None, clave: str
         )
         st.button("Experimentar con este planeta", icon=":material/science:", type="primary",
                   key=f"{clave}_experimentar", on_click=simulador.cargar, args=(p.to_dict(),))
+        if st.session_state.get("ir_a"):
+            st.rerun()  # dentro de un diálogo solo se vuelve a correr el diálogo; así corre la app y cambia de página
         with st.expander(f"Sus {int(p.mediciones)} mediciones publicadas", icon=":material/history_edu:"):
             st.dataframe(datos.historial(p.planeta), hide_index=True, width="stretch", column_config={
                 "fecha_publicacion": st.column_config.DateColumn("Publicada"),
